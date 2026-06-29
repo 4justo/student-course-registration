@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Student Course Registration</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="login-shell">
+      <section class="login-panel">
+        <div class="brand">
+          <div class="logo-placeholder">U</div>
+          <div>
+            <h1>University Registration</h1>
+            <p>Secure student login portal</p>
+          </div>
+        </div>
+
+        <form id="loginForm" class="login-form">
+          <div class="input-group">
+            <label for="registrationNumber">Registration Number</label>
+            <input id="registrationNumber" name="registrationNumber" type="text" autocomplete="username" required />
+          </div>
+          <div class="input-group">
+            <label for="password">Password</label>
+            <div class="password-wrapper">
+              <input id="password" name="password" type="password" autocomplete="current-password" required />
+              <button type="button" id="togglePassword" aria-label="Show password">Show</button>
+            </div>
+          </div>
+          <div class="form-row">
+            <label class="checkbox-label">
+              <input id="rememberMe" name="rememberMe" type="checkbox" />
+              Remember Me
+            </label>
+            <a href="#" class="small-link">Forgot Password?</a>
+          </div>
+          <button type="submit" class="primary-button">Sign In</button>
+          <div id="loginMessage" class="toast"></div>
+        </form>
+      </section>
+    </main>
+    <script src="app.js"></script>
+  </body>
+</html>

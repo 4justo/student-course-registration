@@ -1,0 +1,42 @@
+{
+  "name": "student-course-registration-system",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Enterprise-grade student course registration system built with Node.js, Express, Prisma, and Supabase PostgreSQL.",
+  "main": "server/index.js",
+  "scripts": {
+    "dev": "nodemon server/index.js",
+    "start": "node server/index.js",
+    "lint": "eslint .",
+    "format": "prettier --write \"**/*.{js,json,md,yaml,yml}\"",
+    "test": "jest --runInBand"
+  },
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "csurf": "^1.11.0",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.4",
+    "express-rate-limit": "^6.8.0",
+    "helmet": "^7.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "prisma": "^5.20.0",
+    "@prisma/client": "^5.20.0",
+    "swagger-ui-express": "^4.7.1",
+    "xss": "^1.0.16",
+    "js-yaml": "^5.1.0",
+    "zod": "^3.23.2"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-node": "^11.1.0",
+    "jest": "^29.7.0",
+    "nodemon": "^3.0.1",
+    "prettier": "^3.12.2",
+    "supertest": "^6.4.2"
+  }
+}
