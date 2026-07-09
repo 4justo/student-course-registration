@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>EduRegister — Admin Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="brand"><div class="brand-icon">🎓</div><div class="brand-name">EduRegister</div>
+      <button class="menu-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false" aria-controls="site-navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <nav id="site-navigation" class="main-nav">
+      <a class="nav-button" href="index.html">Home</a>
+      <a class="nav-button" href="catalog.html">Catalog</a>
+      <a class="nav-button" href="my-courses.html">My Courses</a>
+      <a class="nav-button active" href="admin.html">Admin</a>
+    </nav>
+    <div class="header-actions">
+      <label class="role-label">Role
+        <select id="role-select-admin" aria-label="Role select">
+          <option>Admin</option>
+          <option>Student</option>
+        </select>
+      </label>
+    </div>
+  </header>
+
+  <main class="page admin-page">
+    <section class="admin-hero panel">
+      <div>
+        <p class="eyebrow">Admin Dashboard</p>
+        <h1>Manage registrations, approvals, and courses</h1>
+        <p class="hero-copy">Keep enrollment smooth with central controls for approvals, waitlists, and course publishing.</p>
+      </div>
+    </section>
+
+    <section class="summary-row admin-summary">
+      <div class="summary-card light-blue">
+        <span class="summary-value" id="admin-enrolled">0</span>
+        <span>Total enrolled</span>
+      </div>
+      <div class="summary-card light-green">
+        <span class="summary-value" id="admin-waitlist">0</span>
+        <span>Waitlist entries</span>
+      </div>
+      <div class="summary-card">
+        <span class="summary-value" id="admin-courses">0</span>
+        <span>Total courses</span>
+      </div>
+      <div class="summary-card">
+        <span class="summary-value" id="admin-full">0</span>
+        <span>Full courses</span>
+      </div>
+    </section>
+
+    <section class="admin-grid">
+      <div class="panel">
+        <h2>Pending Approvals</h2>
+        <div id="approvals-list" class="table-list"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Course Waitlists</h2>
+        <div id="waitlist-list" class="table-list"></div>
+      </div>
+
+      <div class="panel chart-card">
+        <div class="chart-header">
+          <h2>Enrollments Chart</h2>
+          <div class="chart-filters">
+            <label class="inline-field">Department
+              <select id="chart-department-filter"></select>
+            </label>
+            <label class="inline-field">From
+              <input id="chart-from-date" type="date" />
+            </label>
+            <label class="inline-field">To
+              <input id="chart-to-date" type="date" />
+            </label>
+            <button id="apply-chart-filters" class="secondary-button">Apply</button>
+          </div>
+        </div>
+        <canvas id="enrollments-chart" height="140"></canvas>
+      </div>
+
+      <div class="panel">
+        <h2>Enrollment Controls</h2>
+        <div class="control-row">
+          <label>Enrollment window
+            <select id="enrol-window-select">
+              <option value="open">Open</option>
+              <option value="closed">Closed</option>
+            </select>
+          </label>
+          <label>Credit limit
+            <input id="admin-credit-limit" type="number" min="0" value="18" />
+          </label>
+          <button id="save-admin-settings" class="primary-button">Save</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Export & Maintenance</h2>
+        <div class="control-row">
+          <button id="export-all" class="secondary-button">Export enrollments CSV</button>
+          <button id="export-waitlist" class="secondary-button">Export waitlist CSV</button>
+          <button id="export-approvals" class="secondary-button">Export approvals CSV</button>
+          <button id="clear-waitlists" class="secondary-button danger-button">Clear all waitlists</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="admin-grid">
+      <div class="panel">
+        <h2>Per-course Analytics</h2>
+        <div id="course-analytics" class="table-list"></div>
+      </div>
+
+      <div class="panel bg-white rounded-[32px] p-6 shadow-[0_20px_60px_rgba(15,40,32,0.08)]">
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+          <h2 class="text-xl font-semibold text-slate-900">Course Management</h2>
+          <p class="text-sm text-slate-500">Upload courses that students will see in the catalog.</p>
+        </div>
+        <div class="grid gap-4">
+          <div class="grid gap-4 sm:grid-cols-2">
+            <label class="block text-sm font-semibold text-slate-700">
+              Course code
+              <input id="new-course-code" placeholder="e.g. CS 101" class="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200" />
+            </label>
+            <label class="block text-sm font-semibold text-slate-700">
+              Title
+              <input id="new-course-title" placeholder="Course title" class="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200" />
+            </label>
+            <label class="block text-sm font-semibold text-slate-700">
+              Department
+              <input id="new-course-category" placeholder="Department" class="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200" />
+            </label>
+            <label class="block text-sm font-semibold text-slate-700">
+              Instructor
+              <input id="new-course-instructor" placeholder="Instructor" class="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200" />
+            </label>
+          </div>
+          <div class="grid gap-4 sm:grid-cols-2">
+            <label class="block text-sm font-semibold text-slate-700">
+              Schedule
+              <input id="new-course-schedule" placeholder="Schedule" class="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200" />
+            </label>
+            <label class="block text-sm font-semibold text-slate-700">
+              Credits
+              <input id="new-course-credits" type="number" min="1" value="3" class="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200" />
+            </label>
+            <label class="block text-sm font-semibold text-slate-700">
+              Capacity
+              <input id="new-course-capacity" type="number" min="1" value="30" class="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200" />
+            </label>
+          </div>
+          <label class="block text-sm font-semibold text-slate-700">
+            Description
+            <textarea id="new-course-description" placeholder="Course description" rows="4" class="mt-2 w-full rounded-[24px] border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200"></textarea>
+          </label>
+          <button id="add-course" class="mt-2 inline-flex items-center justify-center rounded-2xl bg-emerald-600 px-6 py-3 text-white transition hover:bg-emerald-700">Upload Course</button>
+        </div>
+      </div>
+
+      <div class="panel bg-white rounded-[32px] p-6 shadow-[0_20px_60px_rgba(15,40,32,0.08)]">
+        <h2 class="text-xl font-semibold text-slate-900 mb-4">User Management</h2>
+        <div id="user-list" class="table-list"></div>
+        <div class="mt-4 grid gap-3 sm:grid-cols-[1.5fr_1fr_1fr_auto]">
+          <input id="new-user-name" placeholder="Full name" class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none" />
+          <input id="new-user-email" placeholder="email@domain" class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none" />
+          <select id="new-user-role" class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none"><option>Student</option><option>Admin</option></select>
+          <button id="add-user" class="rounded-2xl bg-slate-900 px-6 py-3 text-white transition hover:bg-slate-800">Add user</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Recent Activity</h2>
+      <div id="admin-activity" class="table-list"></div>
+    </section>
+
+  </main>
+
+  <nav class="mobile-bottom-nav" aria-label="Mobile navigation">
+    <a href="index.html">🏠<span>Home</span></a>
+    <a href="catalog.html">📚<span>Catalog</span></a>
+    <a href="my-courses.html">🗂️<span>Courses</span></a>
+    <a class="active" href="admin.html">⚙️<span>Admin</span></a>
+  </nav>
+
+  <script src="scripts.js"></script>
+  <script src="admin-enhancements.js"></script>
+  <script>
+    // small bootstrap for admin page
+    document.addEventListener('DOMContentLoaded', () => {
+      // copy shared functions from scripts.js context
+      function q(id){return document.getElementById(id)}
+      q('role-select-admin').value = (window.getAuthState ? window.getAuthState().role : null) || localStorage.getItem('eduRegisterRole') || 'Admin';
+      q('role-select-admin').addEventListener('change', (e)=>{
+        if (window.setAuthRole) window.setAuthRole(e.target.value, 'Admin');
+        else localStorage.setItem('eduRegisterRole', e.target.value);
+        alert('Role set to ' + e.target.value);
+      });
+
+      // populate summary
+      const enrolled = JSON.parse(localStorage.getItem('eduRegisterEnrolled') || '[]');
+      q('admin-enrolled').textContent = enrolled.length;
+      const wait = JSON.parse(localStorage.getItem('eduRegisterWaitlist')||'{}');
+      const waitCount = Object.keys(wait).reduce((acc,k)=>acc + (wait[k]||[]).length,0);
+      q('admin-waitlist').textContent = waitCount;
+      const allCourses = window.courses || [];
+      q('admin-courses').textContent = allCourses.length;
+      q('admin-full').textContent = allCourses.filter(c=>c.full).length;
+
+      // approvals list
+      function renderApprovals(){
+        const arr = JSON.parse(localStorage.getItem('eduRegisterApprovals')||'[]');
+        const container = q('approvals-list');
+        container.innerHTML = '';
+        if(arr.length===0){container.innerHTML = '<div class="empty-state">No pending approvals.</div>';return}
+        arr.filter(a=>a.status==='pending').forEach(a=>{
+          const course = allCourses.find(c=>c.id===a.courseId);
+          const el = document.createElement('div'); el.className='row-item';
+          el.innerHTML = `<div><strong>${a.requester}</strong> requested <em>${a.courseId}</em> - ${course?course.title:''}<div class='muted'>${a.reason}</div></div>`;
+          const approve = document.createElement('button'); approve.className='secondary-button'; approve.textContent='Approve';
+          const deny = document.createElement('button'); deny.className='danger-button'; deny.textContent='Deny';
+          approve.addEventListener('click', ()=>{ processApprovalRequest(a.id, true); renderApprovals(); updateSummary(); addActivity('Approved '+a.courseId); });
+          deny.addEventListener('click', ()=>{ processApprovalRequest(a.id, false); renderApprovals(); updateSummary(); addActivity('Denied '+a.courseId); });
+          const actions = document.createElement('div'); actions.className='row-actions'; actions.appendChild(approve); actions.appendChild(deny);
+          el.appendChild(actions);
+          container.appendChild(el);
+        })
+      }
+
+      function renderWaitlists(){
+        const w = JSON.parse(localStorage.getItem('eduRegisterWaitlist')||'{}');
+        const container = q('waitlist-list'); container.innerHTML='';
+        const keys = Object.keys(w);
+        if(keys.length===0){container.innerHTML='<div class="empty-state">No waitlists.</div>';return}
+        keys.forEach(k=>{
+          const el = document.createElement('div'); el.className='row-item';
+          el.innerHTML = `<div><strong>${k}</strong><div class='muted'>${w[k].join(', ')}</div></div>`;
+          const pop = document.createElement('button'); pop.className='secondary-button'; pop.textContent='Enroll Next';
+          pop.addEventListener('click', ()=>{ const next = (function(){ const arr=JSON.parse(localStorage.getItem('eduRegisterWaitlist')||'{}'); if(!arr[k]||arr[k].length===0) return null; const n=arr[k].shift(); localStorage.setItem('eduRegisterWaitlist', JSON.stringify(arr)); return n; })(); if(next) alert('Enrolled '+next+' from waitlist for '+k); renderWaitlists(); updateSummary(); addActivity('Enrolled from waitlist '+k); });
+          el.appendChild(pop);
+          container.appendChild(el);
+        })
+      }
+
+      function updateSummary(){
+        q('admin-enrolled').textContent = JSON.parse(localStorage.getItem('eduRegisterEnrolled')||'[]').length;
+        const wait = JSON.parse(localStorage.getItem('eduRegisterWaitlist')||'{}');
+        q('admin-waitlist').textContent = Object.keys(wait).reduce((acc,k)=>acc + (wait[k]||[]).length,0);
+        q('admin-courses').textContent = allCourses.length;
+        q('admin-full').textContent = allCourses.filter(c=>c.full).length;
+      }
+
+      function addActivity(text){
+        const list = q('admin-activity'); const row = document.createElement('div'); row.className='row-item muted'; row.textContent = new Date().toLocaleString() + ' — ' + text; list.prepend(row);
+      }
+
+      renderApprovals(); renderWaitlists(); updateSummary();
+
+      // render new widgets
+      const departmentSelect = q('chart-department-filter');
+      const rangeFrom = q('chart-from-date');
+      const rangeTo = q('chart-to-date');
+      if (departmentSelect) {
+        departmentSelect.innerHTML = ['All', ...(allCourses.map(c => c.category || 'General'))].filter((value, index, array) => array.indexOf(value) === index).map((value) => `<option value="${value}">${value}</option>`).join('');
+      }
+      if (window.renderEnrollmentsChart) {
+        const refreshChart = () => window.renderEnrollmentsChart('enrollments-chart');
+        refreshChart();
+        if (departmentSelect) departmentSelect.addEventListener('change', refreshChart);
+        if (rangeFrom) rangeFrom.addEventListener('change', refreshChart);
+        if (rangeTo) rangeTo.addEventListener('change', refreshChart);
+        const applyButton = q('apply-chart-filters');
+        if (applyButton) applyButton.addEventListener('click', refreshChart);
+      }
+      if (window.renderCourseAnalytics) window.renderCourseAnalytics('course-analytics');
+      if (window.renderUsers) window.renderUsers('user-list');
+
+      q('enrol-window-select').value = (JSON.parse(localStorage.getItem('eduRegisterEnrolWindow')||'true')? 'open':'closed');
+      q('admin-credit-limit').value = parseInt(localStorage.getItem('eduRegisterCreditLimit')||'18',10);
+
+      q('save-admin-settings').addEventListener('click', ()=>{
+        const win = q('enrol-window-select').value === 'open';
+        localStorage.setItem('eduRegisterEnrolWindow', JSON.stringify(win));
+        localStorage.setItem('eduRegisterCreditLimit', parseInt(q('admin-credit-limit').value,10));
+        updateSummary(); addActivity('Saved admin settings');
+        alert('Settings saved.');
+      });
+
+      q('export-all').addEventListener('click', ()=>{
+        if(window.exportEnrollmentsEnhanced){ window.exportEnrollmentsEnhanced(); addActivity('Exported enrollments (enhanced)'); return; }
+        const enrolledIds = JSON.parse(localStorage.getItem('eduRegisterEnrolled')||'[]');
+        const rows = [['Student','CourseCode','Title']];
+        enrolledIds.forEach(id=>{ const c = allCourses.find(x=>x.id===id); if(c) rows.push(['You',c.code,c.title]); });
+        const csv = rows.map(r=>r.map(cell=>`"${String(cell).replace(/"/g,'""')}"`).join(',')).join('\n');
+        const blob = new Blob([csv],{type:'text/csv'}); const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='enrollments.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+        addActivity('Exported enrollments');
+      });
+
+      q('export-waitlist').addEventListener('click', ()=>{ if(window.exportWaitlistCSV){ window.exportWaitlistCSV(); addActivity('Exported waitlist'); } });
+      q('export-approvals').addEventListener('click', ()=>{ if(window.exportApprovalsCSV){ window.exportApprovalsCSV(); addActivity('Exported approvals'); } });
+
+      q('clear-waitlists').addEventListener('click', ()=>{ if(confirm('Clear all waitlists?')){ localStorage.setItem('eduRegisterWaitlist', '{}'); renderWaitlists(); updateSummary(); addActivity('Cleared waitlists'); alert('Cleared'); } });
+
+      const addCourseBtn = q('add-course');
+      if (addCourseBtn) {
+        addCourseBtn.addEventListener('click', async () => {
+          const code = q('new-course-code').value.trim();
+          const title = q('new-course-title').value.trim();
+          const category = q('new-course-category').value.trim();
+          const instructor = q('new-course-instructor').value.trim();
+          const schedule = q('new-course-schedule').value.trim();
+          const credits = parseInt(q('new-course-credits').value, 10) || 3;
+          const capacity = parseInt(q('new-course-capacity').value, 10) || 30;
+          const description = q('new-course-description').value.trim();
+
+          if (!code || !title || !category) {
+            return alert('Please provide a course code, title, and department.');
+          }
+
+          const addedCourse = await window.addCourse({
+            code,
+            title,
+            category,
+            instructor,
+            schedule,
+            credits,
+            capacity,
+            description
+          });
+
+          if (addedCourse) {
+            updateSummary();
+            if (window.renderCourseAnalytics) window.renderCourseAnalytics('course-analytics');
+            addActivity(`Uploaded course ${addedCourse.title}`);
+            q('new-course-code').value = '';
+            q('new-course-title').value = '';
+            q('new-course-category').value = '';
+            q('new-course-instructor').value = '';
+            q('new-course-schedule').value = '';
+            q('new-course-credits').value = '3';
+            q('new-course-capacity').value = '30';
+            q('new-course-description').value = '';
+            alert('Course uploaded successfully and is now visible to students.');
+          }
+        });
+      }
+
+      // wire user add button
+      const addBtn = q('add-user'); if(addBtn){ addBtn.addEventListener('click', ()=>{ const name=q('new-user-name').value.trim(); const email=q('new-user-email').value.trim(); const role=q('new-user-role').value; if(!name||!email) return alert('Provide name and email'); addUser(name,email,role); renderUsers('user-list'); addActivity('Added user '+name); q('new-user-name').value=''; q('new-user-email').value=''; }); }
+
+    });
+  </script>
+</body>
+</html>

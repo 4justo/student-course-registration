@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EduRegister — Course Catalog</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="styles.css" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": "EduRegister Course Catalog",
+    "url": "https://example.com/catalog.html",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "item": {
+          "@type": "Course",
+          "name": "Data Structures & Algorithms",
+          "courseCode": "CS 301",
+          "provider": {"@type": "CollegeOrUniversity","name":"EduRegister University"}
+        }
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "item": {
+          "@type": "Course",
+          "name": "Machine Learning Foundations",
+          "courseCode": "CS 410"
+        }
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="brand">
+      <div class="brand-icon">🎓</div>
+      <span class="brand-name">EduRegister</span>
+      <button class="menu-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false" aria-controls="site-navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <nav id="site-navigation" class="main-nav">
+      <a class="nav-button active" href="catalog.html">Course Catalog</a>
+      <a class="nav-button" href="my-courses.html">My Courses</a>
+    </nav>
+    <div class="header-actions">
+      <div class="user-menu">
+        <span class="user-badge">Y</span>
+        <span class="user-name">You</span>
+        <a href="index.html" class="sign-out">Sign out</a>
+      </div>
+      <label class="role-label">Role
+        <select id="role-select" aria-label="Select role">
+          <option>Student</option>
+          <option>Admin</option>
+        </select>
+      </label>
+      <button id="admin-dashboard" class="secondary-button" style="display:none">Admin Dashboard</button>
+    </div>
+  </header>
+
+  <main class="page catalog-page">
+    <section class="page-heading">
+      <div>
+        <h1>Course Catalog</h1>
+        <p>Fall 2026 semester — browse and register for your courses</p>
+      </div>
+      <div class="search-row">
+        <input type="search" id="search-input" placeholder="Search by title, code, or instructor..." />
+        <div class="filter-chips" id="filter-buttons">
+          <button class="chip active" data-category="All">All</button>
+          <button class="chip" data-category="Computer Science">Computer Science</button>
+          <button class="chip" data-category="Mathematics">Mathematics</button>
+          <button class="chip" data-category="Physics">Physics</button>
+          <button class="chip" data-category="Business">Business</button>
+        </div>
+      </div>
+      <p class="search-result" id="result-count">8 courses found</p>
+    </section>
+
+    <section class="catalog-controls">
+      <div class="controls-inner">
+        <button class="secondary-button" id="export-selected">Export Selected</button>
+        <button class="primary-button" id="bulk-register">Bulk Register</button>
+        <button class="secondary-button" id="clear-selection">Clear Selection</button>
+        <span class="controls-note">Select multiple courses using the checkboxes on each card.</span>
+      </div>
+    </section>
+
+    <section class="card-grid" id="course-grid"></section>
+  </main>
+
+  <div class="details-modal hidden" id="details-modal" role="dialog" aria-modal="true" aria-labelledby="details-modal-title">
+    <div class="details-modal-backdrop" id="details-modal-backdrop"></div>
+    <div class="details-modal-panel">
+      <button class="modal-close-button" id="details-modal-close" aria-label="Close details dialog">×</button>
+      <h2 id="details-modal-title">Course details</h2>
+      <p class="details-short-description" id="details-modal-description"></p>
+      <div class="details-grid">
+        <div>
+          <p class="details-label">Instructor</p>
+          <p id="details-modal-instructor"></p>
+        </div>
+        <div>
+          <p class="details-label">Schedule</p>
+          <p id="details-modal-schedule"></p>
+        </div>
+        <div>
+          <p class="details-label">Credits</p>
+          <p id="details-modal-credits"></p>
+        </div>
+        <div>
+          <p class="details-label">Seats</p>
+          <p id="details-modal-seats"></p>
+        </div>
+      </div>
+      <button class="primary-button" id="details-modal-ok">Got it</button>
+    </div>
+  </div>
+
+  <nav class="mobile-bottom-nav" aria-label="Mobile navigation">
+    <a href="index.html">🏠<span>Home</span></a>
+    <a class="active" href="catalog.html">📚<span>Catalog</span></a>
+    <a href="my-courses.html">🗂️<span>Courses</span></a>
+    <a href="admin.html">⚙️<span>Admin</span></a>
+  </nav>
+
+  <script src="scripts.js"></script>
+</body>
+</html>
