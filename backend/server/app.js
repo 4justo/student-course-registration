@@ -26,7 +26,7 @@ const swaggerDocument = yaml.load(fs.readFileSync(swaggerPath, 'utf8'));
 const app = express();
 
 // Railway sits behind a reverse proxy and sets X-Forwarded-For.
-app.set('trust proxy', 1);
+app.set('trust proxy', true);
 
 app.use(
   helmet({
@@ -46,7 +46,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(morgan('dev'));
-app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 120 }));
+app.use(
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 120,
+    standardHeaders: true,
+    legacyHeaders: false,
+    validate: { xForwardedForHeader: false },
+  }),
+);
 app.use(securityMiddleware);
 
 app.use('/api/auth', authRouter);
