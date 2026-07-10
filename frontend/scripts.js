@@ -718,7 +718,10 @@ async function syncSupabaseCourseSeats(courseId, seats, full) {
   await window.supabase.from('courses').update({ capacity: Number(seats) + Number(full ? 0 : 0) }).eq('id', Number(courseId));
 }
 
-const DEFAULT_API_BASE_URL = 'http://127.0.0.1:4000/api';
+const DEFAULT_API_BASE_URL =
+  typeof window !== 'undefined' && window.location.origin
+    ? `${window.location.origin}/api`
+    : 'http://127.0.0.1:4000/api';
 
 function getApiBaseUrl() {
   return window.API_BASE_URL || localStorage.getItem('eduRegisterApiBaseUrl') || DEFAULT_API_BASE_URL;
