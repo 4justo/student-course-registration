@@ -1,22 +1,20 @@
-FROM node:20-bookworm
+FROM node:20-alpine
 
 WORKDIR /usr/src/app
+
+RUN apk add --no-cache openssl libc6-compat
 
 COPY package.json package-lock.json* ./
 COPY prisma ./prisma
 
-# OpenSSL must be present before `prisma generate` and at runtime.
-RUN apt-get update -y \
-  && apt-get install -y --no-install-recommends openssl libssl3 ca-certificates \
-  && rm -rf /var/lib/apt/lists/* \
-  && openssl version \
-  && npm install \
+RUN npm install \
   && npx prisma generate \
   && npm prune --production
 
 COPY . .
+RUN chmod +x scripts/start.sh
 
 EXPOSE 4000
 
 ENV NODE_ENV=production
-CMD ["node", "backend/server/index.js"]
+CMD ["sh", "scripts/start.sh"]
