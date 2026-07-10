@@ -26,7 +26,9 @@ const swaggerDocument = yaml.load(fs.readFileSync(swaggerPath, 'utf8'));
 const app = express();
 
 // Railway sits behind a reverse proxy and sets X-Forwarded-For.
-app.set('trust proxy', true);
+// Trust the first proxy (the load balancer) rather than `true` which is permissive.
+// See https://expressjs.com/en/guide/behind-proxies.html
+app.set('trust proxy', 1);
 
 app.use(
   helmet({
