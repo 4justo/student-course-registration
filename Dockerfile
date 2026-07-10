@@ -1,8 +1,11 @@
-FROM node:20-slim
+FROM node:20-bookworm-slim
 
 WORKDIR /usr/src/app
 
-RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+# Prisma needs OpenSSL at build and runtime; slim images omit it by default.
+RUN apt-get update -y \
+  && apt-get install -y --no-install-recommends openssl ca-certificates libssl3 \
+  && rm -rf /var/lib/apt/lists/*
 
 COPY package.json package-lock.json* ./
 # Copy Prisma schema so `prisma generate` can run before copying rest of the
