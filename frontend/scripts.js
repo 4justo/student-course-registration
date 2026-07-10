@@ -13,8 +13,9 @@ const siteHeader = document.querySelector('.site-header');
 const AUTH_TOKEN_KEY = 'eduRegisterAuthToken';
 const USER_PROFILE_KEY = 'eduRegisterUserProfile';
 const AUTH_STATE_KEY = 'eduRegisterAuthState';
-const DEFAULT_SUPABASE_URL = 'https://bxnvfdzyosniqvsrpnwe.supabase.co';
-const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_3Ro93gV3ZWCmkKKCfEtdsA_qplJAteL';
+// Default placeholders — DO NOT commit real keys. Configure at runtime or via localStorage.
+const DEFAULT_SUPABASE_URL = 'https://your-supabase-url.supabase.co';
+const DEFAULT_SUPABASE_ANON_KEY = 'REPLACE_WITH_SUPABASE_ANON_KEY';
 
 function getSupabaseConfig() {
   return {

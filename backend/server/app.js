@@ -15,9 +15,12 @@ import { errorHandler } from '../middleware/error.middleware.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const swaggerDocument = yaml.load(
-  fs.readFileSync(path.join(__dirname, '../docs/swagger.yaml'), 'utf8'),
-);
+// Resolve swagger YAML path: prefer backend/docs, fall back to project-level docs/
+let swaggerPath = path.join(__dirname, '../docs/swagger.yaml');
+if (!fs.existsSync(swaggerPath)) {
+  swaggerPath = path.join(__dirname, '../../docs/swagger.yaml');
+}
+const swaggerDocument = yaml.load(fs.readFileSync(swaggerPath, 'utf8'));
 
 const app = express();
 
