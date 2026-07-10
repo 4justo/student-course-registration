@@ -2,12 +2,17 @@ FROM node:20-bookworm
 
 WORKDIR /usr/src/app
 
-RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
-
 COPY package.json package-lock.json* ./
 COPY prisma ./prisma
 
-RUN npm install && npx prisma generate && npm prune --production
+# OpenSSL must be present before `prisma generate` and at runtime.
+RUN apt-get update -y \
+  && apt-get install -y --no-install-recommends openssl libssl3 ca-certificates \
+  && rm -rf /var/lib/apt/lists/* \
+  && openssl version \
+  && npm install \
+  && npx prisma generate \
+  && npm prune --production
 
 COPY . .
 
