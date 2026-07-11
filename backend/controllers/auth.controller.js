@@ -1,6 +1,21 @@
 import AuthService from '../services/auth.service.js';
 
 const AuthController = {
+  async register(req, res, next) {
+    try {
+      const result = await AuthService.register(req.body);
+      res.cookie('refreshToken', result.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+      res.json({ accessToken: result.accessToken, profile: result.profile });
+    } catch (error) {
+      next(error);
+    }
+  },
+
   async login(req, res, next) {
     try {
       const result = await AuthService.login(req.body);
