@@ -25,9 +25,6 @@ const swaggerDocument = yaml.load(fs.readFileSync(swaggerPath, 'utf8'));
 
 const app = express();
 
-// Railway sits behind a reverse proxy and sets X-Forwarded-For.
-app.set('trust proxy', true);
-
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -52,7 +49,7 @@ app.use(
     max: 120,
     standardHeaders: true,
     legacyHeaders: false,
-    validate: { xForwardedForHeader: false },
+    trustProxy: 1, // Trust 1 proxy (Railway's reverse proxy)
   }),
 );
 app.use(securityMiddleware);
