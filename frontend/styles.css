@@ -35,8 +35,10 @@ body {
   background: linear-gradient(180deg, var(--bg-start) 0%, var(--bg-end) 100%);
   padding-bottom: calc(92px + env(safe-area-inset-bottom));
 }
-body.mobile-menu-open {
-  overflow: hidden;
+@media (max-width: 900px) {
+  body.mobile-menu-open {
+    overflow: hidden;
+  }
 }
 button, input, textarea, select {
   font: inherit;
