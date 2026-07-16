@@ -1,13 +1,21 @@
 import { Router } from 'express';
 import AuthController from '../controllers/auth.controller.js';
+import { requireAuth } from '../middleware/auth.middleware.js';
+import { authRateLimiter } from '../middleware/security.middleware.js';
 
 const router = Router();
 
-router.post('/login', AuthController.login);
-router.post('/logout', AuthController.logout);
+// Public routes — rate limited to blunt brute-force/credential-stuffing attempts.
+router.post('/register', authRateLimiter, AuthController.register);
+router.post('/register-admin', authRateLimiter, AuthController.registerAdmin);
+router.post('/login', authRateLimiter, AuthController.login);
 router.post('/refresh', AuthController.refreshToken);
-router.post('/forgot-password', AuthController.forgotPassword);
-router.post('/reset-password', AuthController.resetPassword);
-router.get('/profile', AuthController.getProfile);
+router.post('/forgot-password', authRateLimiter, AuthController.forgotPassword);
+router.post('/reset-password', authRateLimiter, AuthController.resetPassword);
+
+// Protected routes — require a valid Bearer access token.
+router.post('/logout', requireAuth, AuthController.logout);
+router.get('/profile', requireAuth, AuthController.getProfile);
+router.get('/me', requireAuth, AuthController.getProfile);
 
 export default router;

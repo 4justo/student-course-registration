@@ -1,16 +1,38 @@
 import AuthService from '../services/auth.service.js';
 
+const REFRESH_COOKIE_OPTS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'strict',
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+};
+
 const AuthController = {
+  async register(req, res, next) {
+    try {
+      const result = await AuthService.register(req.body);
+      res.cookie('refreshToken', result.refreshToken, REFRESH_COOKIE_OPTS);
+      res.json({ token: result.accessToken, user: result.user, student: result.student });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async registerAdmin(req, res, next) {
+    try {
+      const result = await AuthService.registerAdmin(req.body);
+      res.cookie('refreshToken', result.refreshToken, REFRESH_COOKIE_OPTS);
+      res.json({ token: result.accessToken, user: result.user, student: result.student });
+    } catch (error) {
+      next(error);
+    }
+  },
+
   async login(req, res, next) {
     try {
       const result = await AuthService.login(req.body);
-      res.cookie('refreshToken', result.refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      });
-      res.json({ accessToken: result.accessToken, profile: result.profile });
+      res.cookie('refreshToken', result.refreshToken, REFRESH_COOKIE_OPTS);
+      res.json({ token: result.accessToken, user: result.user, student: result.student });
     } catch (error) {
       next(error);
     }
@@ -29,13 +51,8 @@ const AuthController = {
   async refreshToken(req, res, next) {
     try {
       const result = await AuthService.refreshToken(req.cookies.refreshToken);
-      res.cookie('refreshToken', result.refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      });
-      res.json({ accessToken: result.accessToken });
+      res.cookie('refreshToken', result.refreshToken, REFRESH_COOKIE_OPTS);
+      res.json({ token: result.accessToken });
     } catch (error) {
       next(error);
     }
@@ -62,7 +79,7 @@ const AuthController = {
   async getProfile(req, res, next) {
     try {
       const profile = await AuthService.getProfile(req.user);
-      res.json(profile);
+      res.json(profile.user);
     } catch (error) {
       next(error);
     }

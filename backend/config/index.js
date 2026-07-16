@@ -14,6 +14,7 @@ const config = {
   refreshTokenExpiry: process.env.REFRESH_TOKEN_EXPIRY || '7d',
   supabaseUrl: process.env.SUPABASE_URL,
   supabaseServiceKey: process.env.SUPABASE_SERVICE_KEY,
+  adminRegistrationCode: process.env.ADMIN_REGISTRATION_CODE,
 };
 
 export default config;

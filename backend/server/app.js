@@ -10,6 +10,9 @@ import path from 'path';
 import yaml from 'js-yaml';
 import { fileURLToPath } from 'url';
 import authRouter from '../routes/auth.route.js';
+import courseRouter from '../routes/course.route.js';
+import studentRouter from '../routes/student.route.js';
+import registrationRouter from '../routes/registration.route.js';
 import { securityMiddleware } from '../middleware/security.middleware.js';
 import { errorHandler } from '../middleware/error.middleware.js';
 
@@ -24,11 +27,6 @@ if (!fs.existsSync(swaggerPath)) {
 const swaggerDocument = yaml.load(fs.readFileSync(swaggerPath, 'utf8'));
 
 const app = express();
-
-// Railway sits behind a reverse proxy and sets X-Forwarded-For.
-// Trust the first proxy (the load balancer) rather than `true` which is permissive.
-// See https://expressjs.com/en/guide/behind-proxies.html
-app.set('trust proxy', 1);
 
 app.use(
   helmet({
@@ -54,12 +52,15 @@ app.use(
     max: 120,
     standardHeaders: true,
     legacyHeaders: false,
-    validate: { xForwardedForHeader: false },
+    trustProxy: 1, // Trust 1 proxy (Railway's reverse proxy)
   }),
 );
 app.use(securityMiddleware);
 
 app.use('/api/auth', authRouter);
+app.use('/api/courses', courseRouter);
+app.use('/api/students', studentRouter);
+app.use('/api/registrations', registrationRouter);
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 

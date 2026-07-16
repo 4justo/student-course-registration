@@ -346,10 +346,10 @@ async function loginUser(email, password) {
   return result;
 }
 
-async function registerUser(name, email, password) {
+async function registerUser(reg_no, email, password) {
   const result = await apiFetch('/auth/register', {
     method: 'POST',
-    body: JSON.stringify({ name, email, password }),
+    body: JSON.stringify({ reg_no, email, password }),
   });
   saveAuthToken(result.token);
   saveUserProfile({ user: result.user, student: result.student });
@@ -394,19 +394,28 @@ if (signInButton) {
 
 if (createAccountButton) {
   createAccountButton.addEventListener('click', async () => {
-    const nameInput = document.getElementById('create-name');
+    const regNoInput = document.getElementById('create-reg-no');
     const emailInput = document.getElementById('create-email');
     const passwordInput = document.getElementById('create-password');
-    const name = nameInput?.value.trim();
+    const confirmInput = document.getElementById('create-confirm-password');
+    const agreeCheckbox = document.getElementById('agree-terms');
+    const reg_no = regNoInput?.value.trim();
     const email = emailInput?.value.trim();
     const password = passwordInput?.value.trim();
+    const confirmPassword = confirmInput?.value.trim();
 
-    if (!name || !email || !password) {
-      return alert('Please provide your name, email, and a password.');
+    if (!reg_no || !email || !password) {
+      return alert('Please provide your registration number, email, and a password.');
+    }
+    if (password !== confirmPassword) {
+      return alert('Passwords do not match. Please re-enter your password.');
+    }
+    if (agreeCheckbox && !agreeCheckbox.checked) {
+      return alert('Please agree to the privacy policy and terms to continue.');
     }
 
     try {
-      await registerUser(name, email, password);
+      await registerUser(reg_no, email, password);
       window.location.href = 'catalog.html';
     } catch (error) {
       alert(error.message || 'Account creation failed. Please try again.');
@@ -752,18 +761,30 @@ async function apiFetch(path, options = {}) {
     headers,
     ...options,
   });
-  if (response.status === 401) {
+
+  // Auth endpoints legitimately return 401 for wrong credentials — that's
+  // not an expired session, so don't wipe storage or redirect for those.
+  const isAuthAttempt = path.startsWith('/auth/login') || path.startsWith('/auth/register');
+
+  if (response.status === 401 && !isAuthAttempt) {
     clearAuthToken();
     clearUserProfile();
     clearAuthState();
     if (!window.location.pathname.endsWith('index.html')) {
       window.location.href = 'index.html';
     }
-    throw new Error('Unauthorized access. Please sign in again.');
+    throw new Error('Your session has expired. Please sign in again.');
   }
+
   if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`${response.status} ${response.statusText}: ${text}`);
+    let message = `${response.status} ${response.statusText}`;
+    try {
+      const data = await response.json();
+      message = data?.error?.message || data?.message || message;
+    } catch (_error) {
+      // response body wasn't JSON — fall back to the status text above
+    }
+    throw new Error(message);
   }
   return response.json();
 }

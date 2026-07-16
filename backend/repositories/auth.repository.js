@@ -1,38 +1,42 @@
-import pkg from '@prisma/client';
-const { PrismaClient } = pkg;
+import prisma from '../lib/prisma.js';
 
-const prisma = new PrismaClient();
-
+// NOTE: these queries are written against the actual prisma/schema.prisma
+// models (`users`, `students`) — not the placeholder `Student`/`Session`
+// models the old version of this file referenced, which don't exist in the
+// schema and caused every login/register call to throw.
 const authRepository = {
-  async findStudentByRegistration(registrationNumber) {
-    return prisma.student.findUnique({
-      where: { registrationNumber },
-      include: { role: true },
+  async findUserByEmail(email) {
+    return prisma.users.findUnique({ where: { email } });
+  },
+
+  async findUserById(id) {
+    return prisma.users.findUnique({ where: { id } });
+  },
+
+  async createUser({ name, email, passwordHash, role, gender }) {
+    return prisma.users.create({
+      data: {
+        name,
+        email,
+        password_hash: passwordHash,
+        role,
+        gender: gender || null,
+      },
     });
   },
 
-  async findSessionByToken(refreshToken) {
-    return prisma.session.findUnique({ where: { refreshToken } });
+  async findStudentByUserId(userId) {
+    return prisma.students.findUnique({ where: { user_id: userId } });
   },
 
-  async rotateRefreshToken(sessionId, refreshToken) {
-    return prisma.session.update({ where: { id: sessionId }, data: { refreshToken } });
+  async findStudentByRegNo(reg_no) {
+    return prisma.students.findUnique({ where: { reg_no } });
   },
 
-  async revokeRefreshToken(refreshToken) {
-    return prisma.session.deleteMany({ where: { refreshToken } });
-  },
-
-  async getStudentProfile(studentId) {
-    return prisma.student.findUnique({
-      where: { id: studentId },
-      select: {
-        id: true,
-        registrationNumber: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-      },
+  // reg_no is now provided by the user on registration (not auto-generated).
+  async createStudentForUser(userId, reg_no) {
+    return prisma.students.create({
+      data: { user_id: userId, reg_no },
     });
   },
 };
