@@ -55,7 +55,7 @@ const AuthService = {
 
     const passwordHash = await bcrypt.hash(data.password, 12);
     const user = await authRepository.createUser({
-      name: data.reg_no,   // reg_no is used as the user's display name
+      name: data.name,
       email: data.email,
       passwordHash,
       role: 'student',
@@ -188,6 +188,29 @@ const AuthService = {
     }
     const student = user.role === 'student' ? await authRepository.findStudentByUserId(user.id) : null;
     return { user: toPublicUser(user), student: toPublicStudent(student) };
+  },
+
+  async listUsers() {
+    const users = await authRepository.findAllUsers();
+    // Attach student reg_no where available without extra per-user queries
+    return users.map(toPublicUser);
+  },
+
+  async updateUserRole({ userId, role }) {
+    const normalized = role.toLowerCase();
+    if (!['student', 'admin'].includes(normalized)) {
+      const error = new Error('Role must be either "student" or "admin"');
+      error.status = 400;
+      throw error;
+    }
+    const user = await authRepository.findUserById(BigInt(userId));
+    if (!user) {
+      const error = new Error('User not found');
+      error.status = 404;
+      throw error;
+    }
+    const updated = await authRepository.updateUserRole(BigInt(userId), normalized);
+    return { user: toPublicUser(updated) };
   },
 };
 

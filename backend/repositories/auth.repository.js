@@ -39,6 +39,19 @@ const authRepository = {
       data: { user_id: userId, reg_no },
     });
   },
+
+  async findAllUsers() {
+    return prisma.users.findMany({
+      orderBy: { id: 'asc' },
+    });
+  },
+
+  async updateUserRole(userId, role) {
+    return prisma.users.update({
+      where: { id: userId },
+      data: { role },
+    });
+  },
 };
 
 export default authRepository;

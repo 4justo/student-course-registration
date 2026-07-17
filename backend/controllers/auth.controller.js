@@ -84,6 +84,29 @@ const AuthController = {
       next(error);
     }
   },
+
+  async listUsers(req, res, next) {
+    try {
+      const users = await AuthService.listUsers();
+      res.json({ users });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async updateUserRole(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { role } = req.body;
+      if (!role) {
+        return res.status(400).json({ error: { message: 'role is required', status: 400 } });
+      }
+      const result = await AuthService.updateUserRole({ userId: id, role });
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  },
 };
 
 export default AuthController;

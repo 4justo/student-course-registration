@@ -91,8 +91,8 @@ function getUsers() {
   const saved = JSON.parse(localStorage.getItem('eduRegisterUsers') || '[]');
   if (saved.length) return saved;
   const defaults = [
-    { id: 'u_admin', name: 'Admin User', email: 'admin@university.edu', role: 'Admin' },
-    { id: 'u_student', name: 'Student User', email: 'student@university.edu', role: 'Student' }
+    { id: 'u_admin', name: 'Admin User', email: 'admin@university.edu', role: 'admin' },
+    { id: 'u_student', name: 'Student User', email: 'student@university.edu', role: 'student' }
   ];
   saveUsers(defaults);
   return defaults;
