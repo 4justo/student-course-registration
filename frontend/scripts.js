@@ -175,12 +175,21 @@ function clearUserProfile() {
   localStorage.removeItem(USER_PROFILE_KEY);
 }
 
+function normalizeRole(role) {
+  if (!role) return 'student';
+  return role.toLowerCase();
+}
+
+function displayRole(role) {
+  const r = normalizeRole(role);
+  return r.charAt(0).toUpperCase() + r.slice(1);
+}
+
 function updateUserMenu() {
-  const profile = getCurrentUserProfile();
   const userBadge = document.querySelector('.user-badge');
   const userName = document.querySelector('.user-name');
   const authState = getAuthState();
-  const role = authState.role || 'Student';
+  const role = normalizeRole(authState.role);
   const name = authState.name || 'You';
 
   if (userBadge) {
@@ -189,14 +198,23 @@ function updateUserMenu() {
   if (userName) {
     userName.textContent = name;
   }
-  if (roleSelect && roleSelect.value !== role) {
-    roleSelect.value = role;
+  // Sync role select — options use capitalized values (Student/Admin)
+  if (roleSelect) {
+    const displayVal = displayRole(role);
+    if (roleSelect.value !== displayVal) roleSelect.value = displayVal;
   }
   updateRoleUI();
 }
 
 function requireAuthPage() {
-  if (window.location.pathname.includes('index.html') || window.location.pathname.endsWith('/')) {
+  const p = window.location.pathname;
+  // Public pages — no auth needed
+  if (
+    p.includes('index.html') ||
+    p.endsWith('/') ||
+    p.includes('forgot-password.html') ||
+    p.includes('reset-password.html')
+  ) {
     return;
   }
   if (!getStoredAuthToken()) {
@@ -208,7 +226,7 @@ function requireAdminRole() {
   if (window.location.pathname.includes('admin.html')) {
     const authState = getAuthState();
     const token = getStoredAuthToken();
-    if (!token || authState.role?.toLowerCase() !== 'admin') {
+    if (!token || normalizeRole(authState.role) !== 'admin') {
       window.location.href = 'index.html';
     }
   }
@@ -218,12 +236,15 @@ function getAuthState() {
   const profile = getCurrentUserProfile();
   if (profile && profile.user) {
     return {
-      role: profile.user.role || 'Student',
+      // Always store/return lowercase so comparisons never need to guess casing
+      role: normalizeRole(profile.user.role) || 'student',
       name: profile.user.name || 'You',
     };
   }
   try {
-    return JSON.parse(localStorage.getItem(AUTH_STATE_KEY) || '{}');
+    const stored = JSON.parse(localStorage.getItem(AUTH_STATE_KEY) || '{}');
+    if (stored.role) stored.role = normalizeRole(stored.role);
+    return stored;
   } catch (error) {
     return {};
   }
@@ -346,10 +367,10 @@ async function loginUser(email, password) {
   return result;
 }
 
-async function registerUser(name, email, password) {
+async function registerUser(name, reg_no, email, password) {
   const result = await apiFetch('/auth/register', {
     method: 'POST',
-    body: JSON.stringify({ name, email, password }),
+    body: JSON.stringify({ name, reg_no, email, password }),
   });
   saveAuthToken(result.token);
   saveUserProfile({ user: result.user, student: result.student });
@@ -384,9 +405,8 @@ if (signInButton) {
     }
 
     try {
-      const result = await loginUser(email, password);
-      const role = result?.user?.role?.toLowerCase();
-      window.location.href = role === 'admin' ? 'admin.html' : 'catalog.html';
+      await loginUser(email, password);
+      window.location.href = 'catalog.html';
     } catch (error) {
       alert(error.message || 'Login failed. Please check your credentials.');
     }
@@ -396,18 +416,29 @@ if (signInButton) {
 if (createAccountButton) {
   createAccountButton.addEventListener('click', async () => {
     const nameInput = document.getElementById('create-name');
+    const regNoInput = document.getElementById('create-reg-no');
     const emailInput = document.getElementById('create-email');
     const passwordInput = document.getElementById('create-password');
+    const confirmInput = document.getElementById('create-confirm-password');
+    const agreeCheckbox = document.getElementById('agree-terms');
     const name = nameInput?.value.trim();
+    const reg_no = regNoInput?.value.trim();
     const email = emailInput?.value.trim();
     const password = passwordInput?.value.trim();
+    const confirmPassword = confirmInput?.value.trim();
 
-    if (!name || !email || !password) {
-      return alert('Please provide your name, email, and a password.');
+    if (!name || !reg_no || !email || !password) {
+      return alert('Please provide your name, registration number, email, and a password.');
+    }
+    if (password !== confirmPassword) {
+      return alert('Passwords do not match. Please re-enter your password.');
+    }
+    if (agreeCheckbox && !agreeCheckbox.checked) {
+      return alert('Please agree to the privacy policy and terms to continue.');
     }
 
     try {
-      await registerUser(name, email, password);
+      await registerUser(name, reg_no, email, password);
       window.location.href = 'catalog.html';
     } catch (error) {
       alert(error.message || 'Account creation failed. Please try again.');
@@ -753,18 +784,30 @@ async function apiFetch(path, options = {}) {
     headers,
     ...options,
   });
-  if (response.status === 401) {
+
+  // Auth endpoints legitimately return 401 for wrong credentials — that's
+  // not an expired session, so don't wipe storage or redirect for those.
+  const isAuthAttempt = path.startsWith('/auth/login') || path.startsWith('/auth/register');
+
+  if (response.status === 401 && !isAuthAttempt) {
     clearAuthToken();
     clearUserProfile();
     clearAuthState();
     if (!window.location.pathname.endsWith('index.html')) {
       window.location.href = 'index.html';
     }
-    throw new Error('Unauthorized access. Please sign in again.');
+    throw new Error('Your session has expired. Please sign in again.');
   }
+
   if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`${response.status} ${response.statusText}: ${text}`);
+    let message = `${response.status} ${response.statusText}`;
+    try {
+      const data = await response.json();
+      message = data?.error?.message || data?.message || message;
+    } catch (_error) {
+      // response body wasn't JSON — fall back to the status text above
+    }
+    throw new Error(message);
   }
   return response.json();
 }
@@ -1010,6 +1053,8 @@ window.addEventListener('DOMContentLoaded', () => {
     requireAdminRole();
     updateUserMenu();
     initializeBackend();
+    // Sync role from server so DB changes (e.g. made in Supabase) take effect immediately
+    syncRoleFromServer();
   } else {
     updateUserMenu();
   }
@@ -1091,14 +1136,17 @@ function getCurrentEnrolmentWindow() {
 }
 
 if (roleSelect) {
-  const authState = getAuthState();
-  const stored = authState.role || 'Student';
-  roleSelect.value = stored;
-  roleSelect.addEventListener('change', () => {
-    alert('Role is determined by your signed-in account.');
-    roleSelect.value = stored;
-  });
   updateRoleUI();
+  roleSelect.addEventListener('change', () => {
+    // Role is set by the server — clicking Admin shows a message and reverts
+    const authState = getAuthState();
+    const current = normalizeRole(authState.role);
+    const selected = normalizeRole(roleSelect.value);
+    if (selected !== current) {
+      alert('Your role is set by your account. Admins can change it in the Admin Dashboard → Users.');
+      roleSelect.value = displayRole(current);
+    }
+  });
 }
 
 if (adminDashboardButton) {
@@ -1108,27 +1156,44 @@ if (adminDashboardButton) {
   });
 }
 
-// Make brand icon navigate to admin dashboard when role is Admin
+// Brand icon navigates to admin dashboard for admins, home for others
 const brandIcon = document.querySelector('.brand-icon');
 if (brandIcon) {
   brandIcon.style.cursor = 'pointer';
   brandIcon.addEventListener('click', () => {
-    const role = localStorage.getItem('eduRegisterRole') || 'Student';
-    if (role === 'Admin') {
-      window.location.href = 'admin.html';
-    } else {
-      // non-admins go to homepage
-      window.location.href = 'index.html';
-    }
+    const role = normalizeRole(localStorage.getItem('eduRegisterRole') || 'student');
+    window.location.href = role === 'admin' ? 'admin.html' : 'catalog.html';
   });
 }
 
 function updateRoleUI() {
   const authState = getAuthState();
-  const role = authState.role || localStorage.getItem('eduRegisterRole') || 'Student';
-  if (roleSelect && roleSelect.value !== role) roleSelect.value = role;
+  const role = normalizeRole(authState.role || localStorage.getItem('eduRegisterRole') || 'student');
   localStorage.setItem('eduRegisterRole', role);
-  if (adminDashboardButton) adminDashboardButton.style.display = role === 'Admin' ? 'inline-block' : 'none';
+  if (roleSelect) {
+    const displayVal = displayRole(role);
+    if (roleSelect.value !== displayVal) roleSelect.value = displayVal;
+  }
+  if (adminDashboardButton) adminDashboardButton.style.display = role === 'admin' ? 'inline-block' : 'none';
+}
+
+// Sync fresh role from server on every protected page load
+async function syncRoleFromServer() {
+  const token = getStoredAuthToken();
+  if (!token) return;
+  try {
+    const profile = await apiFetch('/auth/me');
+    if (profile && profile.role) {
+      const existing = getCurrentUserProfile() || {};
+      existing.user = { ...(existing.user || {}), ...profile };
+      saveUserProfile(existing);
+      saveAuthState({ role: normalizeRole(profile.role), name: profile.name || existing.user.name });
+      updateUserMenu();
+      updateRoleUI();
+    }
+  } catch (_) {
+    // silently ignore — offline or token expired
+  }
 }
 
 function getWaitlist() {
@@ -1238,35 +1303,32 @@ function renderCourses(courseList) {
     const buttonClass = course.full ? 'disabled-button' : enrolled ? 'outline-button' : 'primary-button';
     const buttonText = course.full ? 'Course Full' : enrolled ? 'Enrolled' : 'Register';
     const actionDisabled = course.full || enrolled;
-    const fillColor = loadRatio >= 90 ? '#c0392b' : loadRatio >= 70 ? '#e67e22' : '#2b8e55';
     return `
       <article class="course-card">
         <div class="course-card-header">
           <div class="header-left">
-            <label class="card-checkbox-label" aria-label="Select ${course.title}">
-              <input type="checkbox" class="select-checkbox card-checkbox" data-select-id="${course.id}" ${selectedCourseIds.has(course.id) ? 'checked' : ''} />
-            </label>
+            <input type="checkbox" class="select-checkbox" data-select-id="${course.id}" aria-label="Select ${course.title}" ${selectedCourseIds.has(course.id) ? 'checked' : ''} />
             <span class="course-tag">${course.code}</span>
             <span class="course-type">${course.category}</span>
           </div>
-          <button class="details-button" data-details-id="${course.id}" aria-label="View ${course.title} details">Details</button>
+          <div class="header-actions">
+            <button class="secondary-button outline-button details-button" data-details-id="${course.id}" aria-label="View ${course.title} details">Details</button>
+          </div>
         </div>
-        <div class="course-body">
+        <div>
           <h2 class="course-title">${course.title}</h2>
           <div class="course-meta">
             <span>🎓 ${course.instructor}</span>
             <span>⏱ ${course.schedule}</span>
-            <span>🧾 ${course.credits} cr &nbsp;⭐ ${course.rating}</span>
+            <span>🧾 ${course.credits} credits • ⭐ ${course.rating}</span>
           </div>
           <p class="course-description">${course.description}</p>
         </div>
-        <div>
-          <div class="seats-row">
-            <span class="seats-label">${course.seats}/${course.capacity} seats</span>
-            <span class="seats-pct" style="color:${fillColor}">${loadRatio}%</span>
-          </div>
-          <div class="seats-bar"><div class="seats-fill" style="width:${loadRatio}%;background:${fillColor};"></div></div>
+        <div class="seats-row">
+          <span class="seats-label">${course.seats}/${course.capacity} seats</span>
+          <span>${loadRatio}%</span>
         </div>
+        <div class="seats-bar"><div class="seats-fill" style="width:${loadRatio}%;"></div></div>
         <div class="course-actions">
           <button class="${buttonClass}" data-course-id="${course.id}" ${actionDisabled ? 'disabled' : ''}>${buttonText}</button>
         </div>
