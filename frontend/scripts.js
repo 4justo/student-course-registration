@@ -36,9 +36,27 @@ async function initializeSupabaseClient() {
 
   try {
     const { url, key } = getSupabaseConfig();
+
+    // Bail out immediately if the user has not replaced the placeholder values.
+    // createClient() succeeds with fake credentials (it doesn't validate them
+    // at construction time), so without this guard window.supabaseConnected
+    // gets set to true and every data call is routed to a Supabase that
+    // doesn't actually work — silently breaking course creation and enrollment.
+    if (
+      !url || url === DEFAULT_SUPABASE_URL ||
+      !key || key === DEFAULT_SUPABASE_ANON_KEY
+    ) {
+      console.info('Supabase not configured — all data operations will use the REST API backend.');
+      return false;
+    }
+
     persistSupabaseConfig(url, key);
     const { initSupabase } = await import('./supabaseClient.js');
-    await initSupabase(url, key);
+    const client = await initSupabase(url, key);
+    if (!client) {
+      // initSupabase returns null when url/key are falsy — treat as not connected
+      return false;
+    }
     window.supabaseConnected = true;
     window.dispatchEvent(new CustomEvent('supabase:ready'));
     return true;
@@ -913,6 +931,7 @@ async function loadCourses() {
     courses = defaultCourses.map(normalizeCourse);
     window.courses = courses;
     if (courseGrid) renderCourses(courses);
+    if (typeof window.renderCourseAnalytics === 'function') window.renderCourseAnalytics('course-analytics');
   }
 }
 
@@ -958,15 +977,24 @@ async function initializeBackend() {
       return;
     }
 
-    await ensureStudentProfile();
+    // Admin pages don't need a student profile — skip the creation step so
+    // we don't create a spurious student record for admin accounts and avoid
+    // an unnecessary round-trip that could mask the course load.
+    const isAdminPage = window.location.pathname.includes('admin.html');
+    if (!isAdminPage) {
+      await ensureStudentProfile();
+    }
     await loadCourses();
-    await loadRegistrations();
+    if (!isAdminPage) {
+      await loadRegistrations();
+    }
   } catch (error) {
     console.warn('Backend initialization failed:', error);
     if (!courses.length) {
       courses = defaultCourses.map(normalizeCourse);
       window.courses = courses;
       if (courseGrid) renderCourses(courses);
+      if (typeof window.renderCourseAnalytics === 'function') window.renderCourseAnalytics('course-analytics');
     }
     if (typeof renderEnrollmentPage === 'function') renderEnrollmentPage();
   }
@@ -1038,6 +1066,7 @@ async function addCourse(courseData) {
     console.warn('Failed to save course to backend:', error);
     const fallbackCourse = normalizeCourse({ ...courseData, id: courseData.id || `course-${Date.now().toString(36)}`, seats: 0, full: false });
     saveCourses([...courses, fallbackCourse]);
+    if (typeof window.renderCourseAnalytics === 'function') window.renderCourseAnalytics('course-analytics');
     return fallbackCourse;
   }
 }
