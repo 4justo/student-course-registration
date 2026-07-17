@@ -1301,37 +1301,69 @@ function renderCourses(courseList) {
   courseGrid.innerHTML = filtered.map((course) => {
     const enrolled = enrolledCourses.includes(course.id);
     const loadRatio = Math.min(100, Math.round((course.seats / course.capacity) * 100));
-    const buttonClass = course.full ? 'disabled-button' : enrolled ? 'outline-button' : 'primary-button';
-    const buttonText = course.full ? 'Course Full' : enrolled ? 'Enrolled' : 'Register';
-    const actionDisabled = course.full || enrolled;
+    const isSelected = selectedCourseIds.has(course.id);
+
+    // Seat bar colour + glow (Dark Academic palette)
+    let seatBg, seatGlow;
+    if (course.full || loadRatio >= 90) {
+      seatBg = '#e11d48'; seatGlow = 'rgba(225,29,72,0.4)';
+    } else if (loadRatio >= 70) {
+      seatBg = '#f59e0b'; seatGlow = 'rgba(245,158,11,0.4)';
+    } else {
+      seatBg = '#10b981'; seatGlow = 'rgba(16,185,129,0.4)';
+    }
+    const barStyle = `width:${loadRatio}%;background:${seatBg};box-shadow:0 0 10px ${seatGlow}`;
+
+    // Action button
+    let actionBtn;
+    if (course.full) {
+      actionBtn = `<button class="cc-action cc-action--full" data-course-id="${course.id}" disabled>Course Full</button>`;
+    } else if (enrolled) {
+      actionBtn = `<button class="cc-action cc-action--enrolled" data-course-id="${course.id}">&#10003; Enrolled</button>`;
+    } else {
+      actionBtn = `<button class="cc-action cc-action--register" data-course-id="${course.id}">Register</button>`;
+    }
+
     return `
-      <article class="course-card">
-        <div class="course-card-header">
-          <div class="header-left">
-            <input type="checkbox" class="select-checkbox" data-select-id="${course.id}" aria-label="Select ${course.title}" ${selectedCourseIds.has(course.id) ? 'checked' : ''} />
-            <span class="course-tag">${course.code}</span>
-            <span class="course-type">${course.category}</span>
+      <article class="course-card${isSelected ? ' selected' : ''}">
+        <!-- Dark navy header band -->
+        <div class="cc-header">
+          <div class="cc-header-left">
+            <input type="checkbox" class="cc-checkbox select-checkbox" data-select-id="${course.id}"
+              aria-label="Select ${course.title}" ${isSelected ? 'checked' : ''} />
+            <span class="cc-code">${course.code}</span>
+            <span class="cc-category">${course.category}</span>
           </div>
-          <div class="header-actions">
-            <button class="secondary-button outline-button details-button" data-details-id="${course.id}" aria-label="View ${course.title} details">Details</button>
+          <div class="cc-rating">&#9733; ${course.rating}</div>
+        </div>
+        <!-- Card body -->
+        <div class="cc-body">
+          <div class="cc-title-wrap">
+            <h2 class="cc-title">${course.title}</h2>
+            <div class="cc-meta">
+              <span>&#128100; ${course.instructor}</span>
+              <span class="cc-sep">|</span>
+              <span>&#128197; ${course.schedule}</span>
+              <span class="cc-sep">|</span>
+              <span>&#128218; ${course.credits} Credits</span>
+            </div>
           </div>
-        </div>
-        <div>
-          <h2 class="course-title">${course.title}</h2>
-          <div class="course-meta">
-            <span>🎓 ${course.instructor}</span>
-            <span>⏱ ${course.schedule}</span>
-            <span>🧾 ${course.credits} credits • ⭐ ${course.rating}</span>
+          <p class="cc-description">${course.description}</p>
+          <!-- Seat bar -->
+          <div class="cc-seats">
+            <div class="cc-seats-top">
+              <span class="cc-seats-label">Seat Availability</span>
+              <span class="cc-seats-count">${course.seats} / ${course.capacity} (${loadRatio}%)</span>
+            </div>
+            <div class="cc-bar-track">
+              <div class="cc-bar-fill" style="${barStyle}"></div>
+            </div>
           </div>
-          <p class="course-description">${course.description}</p>
-        </div>
-        <div class="seats-row">
-          <span class="seats-label">${course.seats}/${course.capacity} seats</span>
-          <span>${loadRatio}%</span>
-        </div>
-        <div class="seats-bar"><div class="seats-fill" style="width:${loadRatio}%;"></div></div>
-        <div class="course-actions">
-          <button class="${buttonClass}" data-course-id="${course.id}" ${actionDisabled ? 'disabled' : ''}>${buttonText}</button>
+          <!-- Footer -->
+          <div class="cc-footer">
+            <button class="cc-details-btn" data-details-id="${course.id}">View Details &#8594;</button>
+            ${actionBtn}
+          </div>
         </div>
       </article>
     `;
@@ -1346,7 +1378,7 @@ function renderCourses(courseList) {
   });
 
   // details buttons
-  courseGrid.querySelectorAll('.details-button').forEach((btn) => {
+  courseGrid.querySelectorAll('.cc-details-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       const id = btn.dataset.detailsId;
       const course = courses.find(c => c.id === id);
@@ -1538,33 +1570,49 @@ function renderEnrollmentPage() {
     <div class="course-list">
       ${selectedCourses.map((course) => {
         const loadRatio = Math.min(100, Math.round((course.seats / course.capacity) * 100));
+        let seatBg, seatGlow;
+        if (loadRatio >= 90) {
+          seatBg = '#e11d48'; seatGlow = 'rgba(225,29,72,0.4)';
+        } else if (loadRatio >= 70) {
+          seatBg = '#f59e0b'; seatGlow = 'rgba(245,158,11,0.4)';
+        } else {
+          seatBg = '#10b981'; seatGlow = 'rgba(16,185,129,0.4)';
+        }
+        const barStyle = `width:${loadRatio}%;background:${seatBg};box-shadow:0 0 10px ${seatGlow}`;
         return `
         <article class="course-card enrolled-course">
-          <div class="course-card-header">
-            <div class="header-left">
-              <span class="course-tag">${course.code}</span>
-              <span class="course-type">${course.category}</span>
+          <div class="cc-header">
+            <div class="cc-header-left">
+              <span class="cc-code">${course.code}</span>
+              <span class="cc-category">${course.category}</span>
             </div>
-            <div class="header-actions">
-              <button class="secondary-button details-button" data-details-id="${course.id}">Details</button>
+            <div class="cc-rating">&#9733; ${course.rating}</div>
+          </div>
+          <div class="cc-body">
+            <div class="cc-title-wrap">
+              <h2 class="cc-title">${course.title}</h2>
+              <div class="cc-meta">
+                <span>&#128100; ${course.instructor}</span>
+                <span class="cc-sep">|</span>
+                <span>&#128197; ${course.schedule}</span>
+                <span class="cc-sep">|</span>
+                <span>&#128218; ${course.credits} Credits</span>
+              </div>
             </div>
-          </div>
-          <div>
-            <h2 class="course-title">${course.title}</h2>
-            <div class="course-meta">
-              <span>🎓 ${course.instructor}</span>
-              <span>⏱ ${course.schedule}</span>
-              <span>🧾 ${course.credits} credits</span>
+            <p class="cc-description">${course.description}</p>
+            <div class="cc-seats">
+              <div class="cc-seats-top">
+                <span class="cc-seats-label">Seat Availability</span>
+                <span class="cc-seats-count">${course.seats} / ${course.capacity} (${loadRatio}%)</span>
+              </div>
+              <div class="cc-bar-track">
+                <div class="cc-bar-fill" style="${barStyle}"></div>
+              </div>
             </div>
-            <p class="course-description">${course.description}</p>
-          </div>
-          <div class="seats-row">
-            <span class="seats-label">${course.seats}/${course.capacity} seats</span>
-            <span>${loadRatio}%</span>
-          </div>
-          <div class="seats-bar"><div class="seats-fill" style="width:${loadRatio}%;"></div></div>
-          <div class="course-actions">
-            <button class="danger-button" data-remove-id="${course.id}">Drop course</button>
+            <div class="cc-footer">
+              <button class="cc-details-btn" data-details-id="${course.id}">View Details &#8594;</button>
+              <button class="cc-action cc-action--drop danger-button" data-remove-id="${course.id}">Drop Course</button>
+            </div>
           </div>
         </article>`
       }).join('')}
@@ -1572,7 +1620,7 @@ function renderEnrollmentPage() {
   `;
 
   // attach detail buttons
-  enrollmentPanel.querySelectorAll('.details-button').forEach((btn) => {
+  enrollmentPanel.querySelectorAll('.cc-details-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       const id = btn.dataset.detailsId;
       const course = courses.find(c => c.id === id);
