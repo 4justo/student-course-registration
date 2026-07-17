@@ -78,11 +78,37 @@ function renderCourseAnalytics(containerId) {
   const container = document.getElementById(containerId);
   if (!container) return;
   container.innerHTML = '';
-  (window.courses || []).forEach((course) => {
-    const ratio = Math.round((course.seats / course.capacity) * 100);
+  const courseList = window.courses || [];
+  if (!courseList.length) {
+    container.innerHTML = '<div class="empty-state">No course data yet.</div>';
+    return;
+  }
+  courseList.forEach((course) => {
+    const seats = Number(course.seats) || 0;
+    const capacity = Number(course.capacity) || 1;
+    const ratio = Math.min(100, Math.round((seats / capacity) * 100));
+    const fillColor = ratio >= 90 ? '#c0392b' : ratio >= 70 ? '#e67e22' : '#2b8e55';
+    const statusLabel = course.full ? 'Full' : ratio >= 90 ? 'Nearly full' : ratio >= 70 ? 'Filling up' : 'Available';
+    const statusBg = course.full ? '#fde8e8' : ratio >= 90 ? '#fef3e2' : ratio >= 70 ? '#fef9e7' : '#e8f5ed';
+    const statusColor = course.full ? '#9d2618' : ratio >= 90 ? '#b45309' : ratio >= 70 ? '#92400e' : '#1a6640';
+
     const el = document.createElement('div');
-    el.className = 'row-item';
-    el.innerHTML = `<div><strong>${course.code} — ${course.title}</strong><div class='muted'>${course.category} • ${course.instructor}</div></div><div>${course.seats}/${course.capacity} seats (${ratio}%)</div>`;
+    el.className = 'analytics-row';
+    el.innerHTML = `
+      <div class="analytics-row-header">
+        <div class="analytics-row-info">
+          <div class="analytics-row-title"><strong>${course.code}</strong> &mdash; ${course.title}</div>
+          <div class="analytics-row-meta muted">${course.category} &bull; ${course.instructor}</div>
+        </div>
+        <span class="analytics-status-badge" style="background:${statusBg};color:${statusColor}">${statusLabel}</span>
+      </div>
+      <div class="analytics-bar-row">
+        <div class="analytics-bar-wrap">
+          <div class="analytics-bar-fill" style="width:${ratio}%;background:${fillColor}"></div>
+        </div>
+        <span class="analytics-bar-label" style="color:${fillColor}">${seats}/${capacity} &nbsp;(${ratio}%)</span>
+      </div>
+    `;
     container.appendChild(el);
   });
 }
@@ -91,8 +117,8 @@ function getUsers() {
   const saved = JSON.parse(localStorage.getItem('eduRegisterUsers') || '[]');
   if (saved.length) return saved;
   const defaults = [
-    { id: 'u_admin', name: 'Admin User', email: 'admin@university.edu', role: 'admin' },
-    { id: 'u_student', name: 'Student User', email: 'student@university.edu', role: 'student' }
+    { id: 'u_admin', name: 'Admin User', email: 'admin@university.edu', role: 'Admin' },
+    { id: 'u_student', name: 'Student User', email: 'student@university.edu', role: 'Student' }
   ];
   saveUsers(defaults);
   return defaults;

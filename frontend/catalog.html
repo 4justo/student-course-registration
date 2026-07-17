@@ -4,201 +4,135 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>EduRegister — Course Catalog</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="styles.css" />
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "ItemList",
     "name": "EduRegister Course Catalog",
+    "url": "https://example.com/catalog.html",
     "itemListElement": [
-      {"@type":"ListItem","position":1,"item":{"@type":"Course","name":"Data Structures & Algorithms","courseCode":"CS 301"}},
-      {"@type":"ListItem","position":2,"item":{"@type":"Course","name":"Machine Learning Foundations","courseCode":"CS 410"}}
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "item": {
+          "@type": "Course",
+          "name": "Data Structures & Algorithms",
+          "courseCode": "CS 301",
+          "provider": {"@type": "CollegeOrUniversity","name":"EduRegister University"}
+        }
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "item": {
+          "@type": "Course",
+          "name": "Machine Learning Foundations",
+          "courseCode": "CS 410"
+        }
+      }
     ]
   }
   </script>
 </head>
 <body>
+  <header class="site-header">
+    <div class="brand">
+      <div class="brand-icon">🎓</div>
+      <span class="brand-name">EduRegister</span>
+      <button class="menu-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false" aria-controls="site-navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <nav id="site-navigation" class="main-nav">
+      <a class="nav-button active" href="catalog.html">Course Catalog</a>
+      <a class="nav-button" href="my-courses.html">My Courses</a>
+    </nav>
+    <div class="header-actions">
+      <div class="user-menu">
+        <span class="user-badge">Y</span>
+        <span class="user-name">You</span>
+        <a href="index.html" class="sign-out">Sign out</a>
+      </div>
+      <label class="role-label">Role
+        <select id="role-select" aria-label="Select role">
+          <option>Student</option>
+          <option>Admin</option>
+        </select>
+      </label>
+      <button id="admin-dashboard" class="secondary-button" style="display:none">Admin Dashboard</button>
+    </div>
+  </header>
 
-  <!-- ── Hidden compat elements for scripts.js ── -->
-  <div class="visually-hidden" aria-hidden="true">
-    <span class="user-badge"></span>
-    <span class="user-name"></span>
-    <select id="role-select"><option>Student</option><option>Admin</option></select>
-    <button id="admin-dashboard"></button>
-  </div>
-
-  <!-- ── App Shell ── -->
-  <div class="app-shell">
-
-    <!-- Sidebar -->
-    <aside class="sidebar" id="sidebar">
-      <a class="sb-brand" href="index.html">
-        <div class="brand-icon">🎓</div>
-        <span class="brand-name">EduRegister</span>
-      </a>
-
-      <nav class="sb-nav">
-        <a href="catalog.html" class="sb-link active">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-          Course Catalog
-        </a>
-        <a href="my-courses.html" class="sb-link">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
-          My Courses
-        </a>
-        <a href="profile.html" class="sb-link">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          Profile
-        </a>
-        <a href="admin.html" class="sb-link admin-only" style="display:none">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-          Admin
-        </a>
-      </nav>
-
-      <div class="sb-footer">
-        <!-- Credit widget -->
-        <div class="sb-credits">
-          <div class="sb-credits-label">
-            <span>Credits</span>
-            <span><span id="sb-credits-used">0</span>/<span id="sb-credits-max">18</span></span>
-          </div>
-          <div class="sb-credits-bar">
-            <div class="sb-credits-fill" id="sb-credits-fill"></div>
-          </div>
-        </div>
-        <!-- User row -->
-        <div class="sb-user">
-          <a href="profile.html" class="sb-user-badge" id="sb-badge" title="View profile">Y</a>
-          <div class="sb-user-info">
-            <a href="profile.html" class="sb-user-name" id="sb-name">You</a>
-            <span class="sb-user-role" id="sb-user-role">Student</span>
-          </div>
-          <a href="index.html" class="sb-signout sign-out" title="Sign out">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-          </a>
+  <main class="page catalog-page">
+    <section class="page-heading">
+      <div>
+        <h1>Course Catalog</h1>
+        <p>Fall 2026 semester — browse and register for your courses</p>
+      </div>
+      <div class="search-row">
+        <input type="search" id="search-input" placeholder="Search by title, code, or instructor..." />
+        <div class="filter-chips" id="filter-buttons">
+          <button class="chip active" data-category="All">All</button>
+          <button class="chip" data-category="Computer Science">Computer Science</button>
+          <button class="chip" data-category="Mathematics">Mathematics</button>
+          <button class="chip" data-category="Physics">Physics</button>
+          <button class="chip" data-category="Business">Business</button>
         </div>
       </div>
-    </aside>
+      <p class="search-result" id="result-count">8 courses found</p>
+    </section>
 
-    <!-- Overlay -->
-    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+    <section class="catalog-controls">
+      <div class="controls-inner">
+        <button class="secondary-button" id="export-selected">Export Selected</button>
+        <button class="primary-button" id="bulk-register">Bulk Register</button>
+        <button class="secondary-button" id="clear-selection">Clear Selection</button>
+        <span class="controls-note">Select multiple courses using the checkboxes on each card.</span>
+      </div>
+    </section>
 
-    <!-- Main content -->
-    <div class="app-content">
-      <header class="app-topbar">
-        <button class="topbar-toggle" id="topbar-toggle" aria-label="Toggle sidebar">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-        </button>
-        <h1 class="topbar-title">Course Catalog</h1>
-      </header>
+    <section class="card-grid" id="course-grid"></section>
+  </main>
 
-      <main class="page catalog-page">
-        <section class="page-heading">
-          <div>
-            <h1>Course Catalog</h1>
-            <p>Fall 2026 semester — browse and register for your courses</p>
-          </div>
-          <div class="search-row">
-            <input type="search" id="search-input" placeholder="Search by title, code, or instructor..." />
-            <div class="filter-chips" id="filter-buttons">
-              <button class="chip active" data-category="All">All</button>
-              <button class="chip" data-category="Computer Science">Computer Science</button>
-              <button class="chip" data-category="Mathematics">Mathematics</button>
-              <button class="chip" data-category="Physics">Physics</button>
-              <button class="chip" data-category="Business">Business</button>
-            </div>
-          </div>
-          <p class="search-result" id="result-count">8 courses found</p>
-        </section>
-
-        <section class="catalog-controls">
-          <div class="controls-inner">
-            <button class="secondary-button" id="export-selected">Export Selected</button>
-            <button class="primary-button" id="bulk-register">Bulk Register</button>
-            <button class="secondary-button" id="clear-selection">Clear Selection</button>
-            <span class="controls-note">Select multiple courses using the checkboxes on each card.</span>
-          </div>
-        </section>
-
-        <section class="card-grid" id="course-grid"></section>
-      </main>
-    </div>
-  </div><!-- /app-shell -->
-
-  <!-- Details modal -->
   <div class="details-modal hidden" id="details-modal" role="dialog" aria-modal="true" aria-labelledby="details-modal-title">
     <div class="details-modal-backdrop" id="details-modal-backdrop"></div>
     <div class="details-modal-panel">
-      <button class="modal-close-button" id="details-modal-close" aria-label="Close details">×</button>
+      <button class="modal-close-button" id="details-modal-close" aria-label="Close details dialog">×</button>
       <h2 id="details-modal-title">Course details</h2>
       <p class="details-short-description" id="details-modal-description"></p>
       <div class="details-grid">
-        <div><p class="details-label">Instructor</p><p id="details-modal-instructor"></p></div>
-        <div><p class="details-label">Schedule</p><p id="details-modal-schedule"></p></div>
-        <div><p class="details-label">Credits</p><p id="details-modal-credits"></p></div>
-        <div><p class="details-label">Seats</p><p id="details-modal-seats"></p></div>
+        <div>
+          <p class="details-label">Instructor</p>
+          <p id="details-modal-instructor"></p>
+        </div>
+        <div>
+          <p class="details-label">Schedule</p>
+          <p id="details-modal-schedule"></p>
+        </div>
+        <div>
+          <p class="details-label">Credits</p>
+          <p id="details-modal-credits"></p>
+        </div>
+        <div>
+          <p class="details-label">Seats</p>
+          <p id="details-modal-seats"></p>
+        </div>
       </div>
       <button class="primary-button" id="details-modal-ok">Got it</button>
     </div>
   </div>
 
-  <!-- Mobile bottom nav -->
   <nav class="mobile-bottom-nav" aria-label="Mobile navigation">
+    <a href="index.html">🏠<span>Home</span></a>
     <a class="active" href="catalog.html">📚<span>Catalog</span></a>
     <a href="my-courses.html">🗂️<span>Courses</span></a>
-    <a href="profile.html">👤<span>Profile</span></a>
-    <a href="admin.html" class="admin-only" style="display:none">⚙️<span>Admin</span></a>
+    <a href="admin.html">⚙️<span>Admin</span></a>
   </nav>
 
   <script src="scripts.js"></script>
-  <script>
-    // ── Sidebar toggle ──
-    (function() {
-      var sidebar = document.getElementById('sidebar');
-      var overlay = document.getElementById('sidebar-overlay');
-      var toggle  = document.getElementById('topbar-toggle');
-      function open()  { sidebar.classList.add('open');  overlay.classList.add('show'); }
-      function close() { sidebar.classList.remove('open'); overlay.classList.remove('show'); }
-      toggle  && toggle.addEventListener('click', function() { sidebar.classList.contains('open') ? close() : open(); });
-      overlay && overlay.addEventListener('click', close);
-    })();
-
-    // ── Sync sidebar user/role after scripts.js initialises ──
-    function syncSidebarUI() {
-      var authState = window.getAuthState ? window.getAuthState() : {};
-      var role = (authState.role || '').toLowerCase();
-      var name = authState.name || 'You';
-      var isAdmin = role === 'admin';
-
-      var badge = document.getElementById('sb-badge');
-      var nm    = document.getElementById('sb-name');
-      var rl    = document.getElementById('sb-user-role');
-      if (badge) badge.textContent = name.charAt(0).toUpperCase();
-      if (nm)    nm.textContent    = name;
-      if (rl)    rl.textContent    = isAdmin ? 'Admin' : 'Student';
-
-      document.querySelectorAll('.admin-only').forEach(function(el) {
-        el.style.display = isAdmin ? '' : 'none';
-      });
-
-      // credit widget
-      var enrolled = JSON.parse(localStorage.getItem('eduRegisterEnrolled') || '[]');
-      var used  = enrolled.reduce(function(s,c){ return s + (c.credits||0); }, 0);
-      var limit = parseInt(localStorage.getItem('eduRegisterCreditLimit') || '18', 10);
-      var fill  = Math.min(100, Math.round(used / limit * 100));
-      var cu = document.getElementById('sb-credits-used');
-      var cm = document.getElementById('sb-credits-max');
-      var cf = document.getElementById('sb-credits-fill');
-      if (cu) cu.textContent = used;
-      if (cm) cm.textContent = limit;
-      if (cf) cf.style.width = fill + '%';
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-      // Give scripts.js a tick to run first
-      setTimeout(syncSidebarUI, 0);
-    });
-  </script>
 </body>
 </html>
