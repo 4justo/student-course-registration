@@ -72,6 +72,8 @@ button { border: none; cursor: pointer; }
 input, textarea, select { transition: border-color 0.2s, box-shadow 0.2s, background 0.2s; }
 textarea { resize: vertical; }
 input, select, textarea { min-height: 40px; width: 100%; }
+input[type="checkbox"],
+input[type="radio"] { min-height: unset; width: unset; }
 input:focus, textarea:focus, select:focus {
   outline: none;
   border-color: var(--primary);
@@ -911,6 +913,60 @@ input { font-size: 1rem; padding: 14px 18px; border-radius: 12px; }
 .alert { padding: 12px 16px; border-radius: 10px; font-size: 0.85rem; margin-bottom: 14px; }
 .alert.info { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
 .alert.error { background: #fef2f2; color: #b91c1c; border: 1px solid #fca5a5; }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   COURSE ANALYTICS ROWS (admin)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.analytics-row {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border-soft);
+  display: grid;
+  gap: 10px;
+}
+.analytics-row:last-child { border-bottom: none; padding-bottom: 0; }
+.analytics-row-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.analytics-row-info { display: grid; gap: 3px; flex: 1; min-width: 0; }
+.analytics-row-title {
+  font-size: 0.9rem;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.analytics-row-meta { font-size: 0.78rem; color: var(--text-muted); }
+.analytics-status-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.analytics-bar-row { display: flex; align-items: center; gap: 12px; }
+.analytics-bar-wrap {
+  flex: 1;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+.analytics-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+.analytics-bar-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+  min-width: 88px;
+  text-align: right;
+}
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    MY-COURSES page extras

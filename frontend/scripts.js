@@ -405,8 +405,9 @@ if (signInButton) {
     }
 
     try {
-      await loginUser(email, password);
-      window.location.href = 'catalog.html';
+      const result = await loginUser(email, password);
+      const role = result?.user?.role?.toLowerCase();
+      window.location.href = role === 'admin' ? 'admin.html' : 'catalog.html';
     } catch (error) {
       alert(error.message || 'Login failed. Please check your credentials.');
     }
