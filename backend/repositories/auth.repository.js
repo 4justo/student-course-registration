@@ -43,6 +43,9 @@ const authRepository = {
   async findAllUsers() {
     return prisma.users.findMany({
       orderBy: { id: 'asc' },
+      include: {
+        students: true,
+      },
     });
   },
 

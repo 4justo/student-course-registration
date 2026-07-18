@@ -28,6 +28,9 @@ const swaggerDocument = yaml.load(fs.readFileSync(swaggerPath, 'utf8'));
 
 const app = express();
 
+// Trust proxy for rate limiting behind reverse proxy
+app.set('trust proxy', 1);
+
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -52,7 +55,6 @@ app.use(
     max: 120,
     standardHeaders: true,
     legacyHeaders: false,
-    trustProxy: 1, // Trust 1 proxy (Railway's reverse proxy)
   }),
 );
 app.use(securityMiddleware);

@@ -192,8 +192,11 @@ const AuthService = {
 
   async listUsers() {
     const users = await authRepository.findAllUsers();
-    // Attach student reg_no where available without extra per-user queries
-    return users.map(toPublicUser);
+    // Attach student reg_no where available
+    return users.map((user) => ({
+      ...toPublicUser(user),
+      reg_no: user.students?.reg_no || null,
+    }));
   },
 
   async updateUserRole({ userId, role }) {

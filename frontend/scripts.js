@@ -671,8 +671,10 @@ const defaultCourses = [
 function normalizeCourse(course) {
   const capacity = Number(course.capacity || 30);
   const seats = Number(course.seats || 0);
+  // Always convert ID to string for consistent comparison with enrolledCourses
+  const courseId = String(course.id || `${String(course.code || course.title || 'course').toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Date.now().toString(36)}`);
   return {
-    id: String(course.id || `${String(course.code || course.title || 'course').toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Date.now().toString(36)}`),
+    id: courseId,
     code: course.code || course.abbreviation || 'NEW',
     category: course.category || 'General',
     title: course.title || course.name || 'Untitled Course',
@@ -904,9 +906,7 @@ async function loadCourses() {
       courses = await fetchCoursesFromSupabase();
       if (!courses.length) {
         const seeds = defaultCourses.map(normalizeCourse);
-        for (const seed of seeds) {
-          await saveCourseToSupabase(seed);
-        }
+        await Promise.all(seeds.map(seed => saveCourseToSupabase(seed)));
         courses = await fetchCoursesFromSupabase();
       }
       window.courses = courses;
@@ -918,9 +918,7 @@ async function loadCourses() {
     courses = await fetchCoursesApi();
     if (!courses.length) {
       const seeds = defaultCourses.map(normalizeCourse);
-      for (const seed of seeds) {
-        await createCourseBackend(seed);
-      }
+      await Promise.all(seeds.map(seed => createCourseBackend(seed)));
       courses = await fetchCoursesApi();
     }
     window.courses = courses;
@@ -981,12 +979,18 @@ async function initializeBackend() {
     // we don't create a spurious student record for admin accounts and avoid
     // an unnecessary round-trip that could mask the course load.
     const isAdminPage = window.location.pathname.includes('admin.html');
+    
+    // Load courses in parallel with student profile and registrations for faster page load
+    const courseLoadPromise = loadCourses();
+    
     if (!isAdminPage) {
-      await ensureStudentProfile();
-    }
-    await loadCourses();
-    if (!isAdminPage) {
+      await Promise.all([
+        ensureStudentProfile(),
+        courseLoadPromise,
+      ]);
       await loadRegistrations();
+    } else {
+      await courseLoadPromise;
     }
   } catch (error) {
     console.warn('Backend initialization failed:', error);
@@ -1056,7 +1060,8 @@ function initializeDetailsModal() {
 async function addCourse(courseData) {
   try {
     const created = await createCourseBackend(courseData);
-    courses = [...courses, created];
+    // Reload courses from backend to ensure consistency
+    courses = await fetchCoursesApi();
     window.courses = courses;
     if (typeof renderCourses === 'function') renderCourses(courses);
     if (typeof renderEnrollmentPage === 'function') renderEnrollmentPage();
@@ -1534,6 +1539,22 @@ async function enrollCourse(courseId) {
     }
     return;
   }
+
+  // Ensure student profile is initialized before registration
+  if (!window.currentStudentId) {
+    try {
+      const profile = await ensureStudentProfile();
+      if (!profile || !profile.student || !profile.student.id) {
+        alert('Unable to initialize student profile. Please refresh the page and try again.');
+        return;
+      }
+    } catch (error) {
+      console.warn('Failed to ensure student profile:', error);
+      alert('Unable to initialize student profile. Please refresh the page and try again.');
+      return;
+    }
+  }
+
   try {
     await initializeSupabaseClient();
     if (window.supabaseConnected) {
@@ -1553,12 +1574,12 @@ async function enrollCourse(courseId) {
     const registration = await apiFetch('/registrations', {
       method: 'POST',
       body: JSON.stringify({
-        course_id: Number(courseId),
+        course_id: Number(course.id),
         student_id: Number(window.currentStudentId),
       }),
     });
-    registrationMap[courseId] = String(registration.id);
-    enrolledCourses.push(courseId);
+    registrationMap[course.id] = String(registration.id);
+    enrolledCourses.push(String(course.id));
     course.seats = (course.seats || 0) + 1;
     course.full = course.seats >= course.capacity;
     localStorage.setItem('eduRegisterEnrolled', JSON.stringify(enrolledCourses));
@@ -1567,7 +1588,8 @@ async function enrollCourse(courseId) {
     alert(`Registered for ${course.title}!`);
   } catch (error) {
     console.warn('Enrollment failed:', error);
-    alert('Unable to register for the course at this time. Please try again later.');
+    const errorMessage = error.error?.details?.[0]?.message || error.message || error.error?.message || 'Please try again later.';
+    alert(`Unable to register for the course: ${errorMessage}`);
   }
 }
 

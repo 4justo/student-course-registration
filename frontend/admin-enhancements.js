@@ -151,66 +151,86 @@ function setCurrentUser(user) {
   return state;
 }
 
-function renderUsers(containerId) {
+async function renderUsers(containerId) {
   const container = document.getElementById(containerId);
   if (!container) return;
   container.innerHTML = '';
-  const users = getUsers();
-  if (users.length === 0) {
-    container.innerHTML = '<div class="empty-state">No users</div>';
-    return;
-  }
-  users.forEach((user) => {
-    const el = document.createElement('div');
-    el.className = 'row-item';
-    el.innerHTML = `
-      <div class="user-row">
-        <input class="user-name" value="${user.name}" />
-        <input class="user-email" value="${user.email}" />
-        <select class="user-role">
-          <option value="Student" ${user.role === 'Student' ? 'selected' : ''}>Student</option>
-          <option value="Admin" ${user.role === 'Admin' ? 'selected' : ''}>Admin</option>
-        </select>
-      </div>
-    `;
-    const actions = document.createElement('div');
-    actions.className = 'row-actions';
-    const saveButton = document.createElement('button');
-    saveButton.className = 'secondary-button';
-    saveButton.textContent = 'Save';
-    saveButton.addEventListener('click', () => {
-      const name = el.querySelector('.user-name').value.trim();
-      const email = el.querySelector('.user-email').value.trim();
-      const role = el.querySelector('.user-role').value;
-      if (!name || !email) return alert('Please enter a name and email');
-      updateUser(user.id, { name, email, role });
-      renderUsers(containerId);
-      recordActivity(`Updated user ${name}`, '');
-    });
-
-    const signInButton = document.createElement('button');
-    signInButton.className = 'secondary-button';
-    signInButton.textContent = 'Sign in';
-    signInButton.addEventListener('click', () => {
-      setCurrentUser({ ...user, role: el.querySelector('.user-role').value });
-      alert(`Signed in as ${user.name}`);
-    });
-
-    const del = document.createElement('button');
-    del.className = 'danger-button';
-    del.textContent = 'Delete';
-    del.addEventListener('click', () => {
-      if (confirm('Delete user?')) {
-        const next = getUsers().filter((item) => item.id !== user.id);
-        saveUsers(next);
-        renderUsers(containerId);
+  
+  try {
+    const response = await fetch('/api/auth/users', {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('eduRegisterAuthToken')}`
       }
     });
+    if (!response.ok) {
+      throw new Error('Failed to fetch users');
+    }
+    const data = await response.json();
+    const users = data.users || [];
+    
+    if (users.length === 0) {
+      container.innerHTML = '<div class="empty-state">No users</div>';
+      return;
+    }
+    
+    users.forEach((user) => {
+      const el = document.createElement('div');
+      el.className = 'row-item';
+      el.innerHTML = `
+        <div class="user-row">
+          <input class="user-name" value="${user.name}" />
+          <input class="user-email" value="${user.email}" />
+          <input class="user-regno" value="${user.reg_no || ''}" placeholder="Reg No" />
+          <select class="user-role">
+            <option value="student" ${user.role === 'student' ? 'selected' : ''}>Student</option>
+            <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
+          </select>
+        </div>
+      `;
+      const actions = document.createElement('div');
+      actions.className = 'row-actions';
+      const saveButton = document.createElement('button');
+      saveButton.className = 'secondary-button';
+      saveButton.textContent = 'Save';
+      saveButton.addEventListener('click', async () => {
+        const name = el.querySelector('.user-name').value.trim();
+        const email = el.querySelector('.user-email').value.trim();
+        const role = el.querySelector('.user-role').value;
+        if (!name || !email) return alert('Please enter a name and email');
+        
+        try {
+          await fetch(`/api/auth/users/${user.id}/role`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('eduRegisterAuthToken')}`
+            },
+            body: JSON.stringify({ role })
+          });
+          renderUsers(containerId);
+          recordActivity(`Updated user ${name}`, '');
+          alert('User updated successfully');
+        } catch (error) {
+          alert('Failed to update user');
+        }
+      });
 
-    actions.append(saveButton, signInButton, del);
-    el.appendChild(actions);
-    container.appendChild(el);
-  });
+      const signInButton = document.createElement('button');
+      signInButton.className = 'secondary-button';
+      signInButton.textContent = 'Sign in';
+      signInButton.addEventListener('click', () => {
+        setCurrentUser({ ...user, role: el.querySelector('.user-role').value });
+        alert(`Signed in as ${user.name}`);
+      });
+
+      actions.append(saveButton, signInButton);
+      el.appendChild(actions);
+      container.appendChild(el);
+    });
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    container.innerHTML = '<div class="empty-state">Failed to load users</div>';
+  }
 }
 
 function exportWaitlistCSV() {
