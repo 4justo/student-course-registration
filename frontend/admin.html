@@ -682,6 +682,9 @@
         courseList = window.courses || [];
       }
 
+      // Update window.courses for analytics
+      window.courses = courseList;
+
       if (!courseList.length) {
         tbody.innerHTML = '<tr><td class="a-table-empty" colspan="7">No courses found.</td></tr>';
         return;
@@ -715,6 +718,9 @@
           } finally { this.textContent = 'Delete'; this.disabled = false; }
         });
       });
+
+      // Update course analytics
+      if (window.renderCourseAnalytics) window.renderCourseAnalytics('course-analytics');
     }
 
     q('refresh-courses')?.addEventListener('click', loadCourses);
