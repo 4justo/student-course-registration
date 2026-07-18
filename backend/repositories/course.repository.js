@@ -25,6 +25,10 @@ const courseRepository = {
   async create(data) {
     return prisma.courses.create({ data });
   },
+
+  async delete(id) {
+    await prisma.courses.delete({ where: { id: BigInt(id) } });
+  },
 };
 
 export default courseRepository;

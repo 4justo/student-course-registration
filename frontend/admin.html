@@ -338,6 +338,31 @@
 
         <!-- ── COURSES panel ── -->
         <div class="admin-panel" id="panel-courses">
+          <div class="a-card" style="margin-bottom:16px">
+            <div class="a-card-header">
+              <h2 class="a-card-title">Course Catalog</h2>
+              <button class="btn-xs" id="refresh-courses">↻ Refresh</button>
+            </div>
+            <div class="a-card-body" style="overflow-x:auto">
+              <table class="a-table" id="courses-table">
+                <thead>
+                  <tr>
+                    <th>Code</th>
+                    <th>Title</th>
+                    <th>Department</th>
+                    <th>Instructor</th>
+                    <th>Enrolled</th>
+                    <th>Capacity</th>
+                    <th style="width:80px">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="courses-tbody">
+                  <tr><td class="a-table-empty" colspan="7">Loading courses…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
           <div class="two-col" style="margin-bottom:16px">
             <div class="a-card">
               <div class="a-card-header"><h2 class="a-card-title">Upload New Course</h2></div>
@@ -635,6 +660,7 @@
       var added = window.addCourse && await window.addCourse({ code, title, category, instructor, schedule, credits, capacity, description });
       if (added) {
         updateSummary();
+        loadCourses();
         if (window.renderCourseAnalytics) window.renderCourseAnalytics('course-analytics');
         addActivity('Uploaded course ' + title);
         ['new-course-code','new-course-title','new-course-category','new-course-instructor','new-course-schedule','new-course-description']
@@ -643,6 +669,55 @@
         showToast('Course uploaded successfully.');
       }
     });
+
+    /* ── Load courses table ── */
+    async function loadCourses() {
+      var tbody = q('courses-tbody');
+      tbody.innerHTML = '<tr><td class="a-table-empty" colspan="7">Loading…</td></tr>';
+      var courseList = [];
+      try {
+        var res = await apiFetch('/courses');
+        if (Array.isArray(res)) courseList = res;
+      } catch(_) {
+        courseList = window.courses || [];
+      }
+
+      if (!courseList.length) {
+        tbody.innerHTML = '<tr><td class="a-table-empty" colspan="7">No courses found.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = courseList.map(function(c) {
+        return '<tr data-course-id="' + c.id + '">'
+          + '<td style="font-weight:600;font-size:0.82rem">' + escHtml(c.code||'') + '</td>'
+          + '<td>' + escHtml(c.title||'') + '</td>'
+          + '<td style="color:#6b7280">' + escHtml(c.category||'') + '</td>'
+          + '<td style="color:#6b7280">' + escHtml(c.instructor||'') + '</td>'
+          + '<td style="font-size:0.78rem">' + (c.seats||0) + '</td>'
+          + '<td style="font-size:0.78rem">' + (c.capacity||0) + '</td>'
+          + '<td><button class="btn-xs danger delete-course-btn" data-course-id="' + c.id + '">Delete</button></td>'
+          + '</tr>';
+      }).join('');
+
+      tbody.querySelectorAll('.delete-course-btn').forEach(function(btn) {
+        btn.addEventListener('click', async function() {
+          var courseId = this.dataset.courseId;
+          if (!confirm('Delete this course? This will also remove all student enrollments.')) return;
+          this.textContent = '…'; this.disabled = true;
+          try {
+            await apiFetch('/courses/' + courseId, { method: 'DELETE' });
+            showToast('Course deleted successfully.');
+            addActivity('Deleted course ' + courseId);
+            loadCourses();
+            updateSummary();
+          } catch(err) {
+            showToast('Failed to delete course. ' + (err.message || ''), true);
+          } finally { this.textContent = 'Delete'; this.disabled = false; }
+        });
+      });
+    }
+
+    q('refresh-courses')?.addEventListener('click', loadCourses);
 
     /* ── Settings ── */
     q('save-admin-settings')?.addEventListener('click', function() {

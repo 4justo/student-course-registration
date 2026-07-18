@@ -56,6 +56,10 @@ const CourseService = {
 
     return toPublicCourse({ ...course, _count: { registrations: 0 } });
   },
+
+  async remove(id) {
+    await courseRepository.delete(id);
+  },
 };
 
 export default CourseService;

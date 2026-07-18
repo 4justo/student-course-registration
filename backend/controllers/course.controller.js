@@ -18,6 +18,16 @@ const CourseController = {
       next(error);
     }
   },
+
+  async remove(req, res, next) {
+    try {
+      const { id } = req.params;
+      await CourseService.remove(id);
+      res.status(204).send();
+    } catch (error) {
+      next(error);
+    }
+  },
 };
 
 export default CourseController;
